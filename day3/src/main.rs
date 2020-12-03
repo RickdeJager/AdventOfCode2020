@@ -20,12 +20,10 @@ fn part1(field: &Vec<Vec<char>>, dx: usize, dy: usize) -> usize {
 }
 
 fn part2(field: &Vec<Vec<char>>) -> usize {
-    let slopes = vec![(1, 1), (3, 1), (5, 1), (7, 1), (1, 2)];
-    let mut a = 1;
-    for (dx, dy) in slopes {
-        a *= part1(field, dx, dy);
-    }
-    a
+    vec![(1, 1), (3, 1), (5, 1), (7, 1), (1, 2)]
+        .iter()
+        .map(|(dx, dy)| part1(field, *dx, *dy))
+        .product()
 }
 
 fn main() {
