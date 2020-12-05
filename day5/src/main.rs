@@ -22,8 +22,27 @@ fn part1(input: &Vec<String>) -> u32 {
         .max().unwrap()
 }
 
+fn part2(input: &Vec<String>) -> u32 {
+    let mut bps: Vec<u32> = input
+        .iter()
+        .map(|bp| helper1(bp))
+        .collect();
+    bps.sort();
+
+    let mut last: u32 = bps[0];
+    for bp in bps {
+        if bp-last > 1 {
+            return last + 1;
+        }
+        last = bp;
+    }
+    0
+}
+
 fn main() {
     let passes = read();
     println!("===== Part 1 ====");
     println!("Max is {}", part1(&passes));
+    println!("===== Part 2 ====");
+    println!("Our pass is {}", part2(&passes));
 }
