@@ -18,20 +18,20 @@ fn part1(input: &Vec<String>) -> usize {
          .sum()
 }
 
-fn part2(input: &Vec<String>) -> usize {
-    let mut c = 0;
-    for group in input {
-        let mut qs: Vec<char>  = group.split("\n").next().unwrap().chars().collect();
-        for p in group.split("\n") {
-            qs = qs
-                .iter()
-                .filter(|q| p.contains(&q.to_string()))
-                .map(|q| *q)
-                .collect();
-        }
-        c += qs.len();
+fn helper2(group: &String) -> usize {
+    let mut set: HashSet<char> =  group.split("\n").next().unwrap().chars().collect();
+    for p in group.split("\n") {
+        let qs = HashSet::<char>::from_iter(p.chars());
+        set = set.intersection(&qs).copied().collect();
     }
-    c
+    set.len()
+}
+
+fn part2(groups: &Vec<String>) -> usize {
+    groups
+        .iter()
+        .map(|group| helper2(group))
+        .sum()
 }
 
 fn main() {
