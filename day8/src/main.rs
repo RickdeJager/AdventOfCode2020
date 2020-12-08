@@ -1,3 +1,6 @@
+use std::panic;
+
+#[derive(Debug, Clone)]
 struct Opcode {
     command  : String,
     argument: i32,
@@ -5,6 +8,7 @@ struct Opcode {
 
 }
 
+#[derive(Debug, Clone)]
 struct Pc {
     mem: Vec<Opcode>,
     acc: i32,
@@ -25,7 +29,7 @@ fn read() -> Vec<Opcode> {
 
 fn noop(mut pc: Pc) -> Pc{
     if pc.mem[pc.ip].dirty {
-        panic!("PC tired to access an instruction for the second time.\n
+        panic!("PC tried to access an instruction for the second time.\n
                Accumalator is at: {}", pc.acc);
     } else {
         pc.mem[pc.ip].dirty = true;
@@ -36,7 +40,7 @@ fn noop(mut pc: Pc) -> Pc{
 
 fn acc(mut pc: Pc) -> Pc {
     if pc.mem[pc.ip].dirty {
-        panic!("PC tired to access an instruction for the second time.\n
+        panic!("PC tried to access an instruction for the second time.\n
                Accumalator is at: {}", pc.acc);
     } else {
         pc.mem[pc.ip].dirty = true;
@@ -48,7 +52,7 @@ fn acc(mut pc: Pc) -> Pc {
 
 fn jmp(mut pc: Pc) -> Pc {
     if pc.mem[pc.ip].dirty {
-        panic!("PC tired to access an instruction for the second time.\n
+        panic!("PC tried to access an instruction for the second time.\n
                Accumalator is at: {}", pc.acc);
     } else {
         pc.mem[pc.ip].dirty = true;
@@ -57,9 +61,8 @@ fn jmp(mut pc: Pc) -> Pc {
     pc
 }
 
-fn main() {
-    let mut pc = Pc{mem: read(), acc: 0, ip: 0};
-    while true {
+fn run(mut pc: Pc) -> i32 {
+    while pc.ip < pc.mem.len() {
         let c = pc.mem[pc.ip].command.as_str();
         match c {
             "nop" => pc = noop(pc),
@@ -68,4 +71,33 @@ fn main() {
             _ => panic!("wtf: {}", c),
         }
     }
+    pc.acc
+}
+
+fn part1(pc: Pc) {
+    panic::catch_unwind(|| run(pc));
+}
+
+fn part2(pc: Pc) -> i32 {
+    for i in 0..pc.mem.len() {
+        let mut clone = pc.clone();
+        if clone.mem[i].command == "nop" {
+            clone.mem[i].command = "jmp".to_string();
+        } else if clone.mem[i].command == "jmp" {
+            clone.mem[i].command = "nop".to_string();
+        }
+        let c2 = clone.clone();
+        if ! panic::catch_unwind(|| run(clone)).is_err() {
+            return run(c2);
+        };
+    } 
+    unreachable!();
+}
+
+fn main() {
+    let pc = Pc{mem: read(), acc: 0, ip: 0};
+    println!("===== Part 1 ====");
+    part1(pc.clone());
+    println!("===== Part 2 ====");
+    println!("---> {}", part2(pc.clone()));
 }
