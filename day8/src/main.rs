@@ -1,5 +1,3 @@
-use std::panic;
-
 #[derive(Debug, Clone)]
 struct Opcode {
     command  : String,
@@ -27,55 +25,60 @@ fn read() -> Vec<Opcode> {
         .collect()
 }
 
-fn noop(mut pc: Pc) -> Pc{
+fn noop(mut pc: Pc) -> Result<Pc, i32> {
     if pc.mem[pc.ip].dirty {
-        panic!("PC tried to access an instruction for the second time.\n
-               Accumalator is at: {}", pc.acc);
+        return Err(pc.acc);
     } else {
         pc.mem[pc.ip].dirty = true;
         pc.ip += 1;
     }
-    pc
+    Ok(pc)
 }
 
-fn acc(mut pc: Pc) -> Pc {
+fn acc(mut pc: Pc) -> Result<Pc, i32> {
     if pc.mem[pc.ip].dirty {
-        panic!("PC tried to access an instruction for the second time.\n
-               Accumalator is at: {}", pc.acc);
+        return Err(pc.acc);
     } else {
         pc.mem[pc.ip].dirty = true;
         pc.acc += pc.mem[pc.ip].argument;
         pc.ip += 1;
     }
-    pc
+    Ok(pc)
 }
 
-fn jmp(mut pc: Pc) -> Pc {
+fn jmp(mut pc: Pc) -> Result<Pc, i32> {
     if pc.mem[pc.ip].dirty {
-        panic!("PC tried to access an instruction for the second time.\n
-               Accumalator is at: {}", pc.acc);
+        return Err(pc.acc);
     } else {
         pc.mem[pc.ip].dirty = true;
         pc.ip = (pc.ip as i32 + pc.mem[pc.ip].argument) as usize;
     }
-    pc
+    Ok(pc)
 }
 
-fn run(mut pc: Pc) -> i32 {
+fn run(mut pc: Pc) -> Result<i32, i32> {
     while pc.ip < pc.mem.len() {
         let c = pc.mem[pc.ip].command.as_str();
+        let maybe_pc: Result<Pc, i32>;
         match c {
-            "nop" => pc = noop(pc),
-            "acc" => pc = acc(pc),
-            "jmp" => pc = jmp(pc),
+            "nop" => maybe_pc = noop(pc),
+            "acc" => maybe_pc = acc(pc),
+            "jmp" => maybe_pc = jmp(pc),
             _ => panic!("wtf: {}", c),
         }
+        match maybe_pc {
+            Ok(p)  => pc = p,
+            Err(p) => return Err(p),
+        }
     }
-    pc.acc
+    Ok(pc.acc)
 }
 
-fn part1(pc: Pc) {
-    panic::catch_unwind(|| run(pc));
+fn part1(pc: Pc) -> i32{
+    if let Err(acc) = run(pc) {
+        return acc;
+    }
+    unreachable!();
 }
 
 fn part2(pc: Pc) -> i32 {
@@ -86,10 +89,9 @@ fn part2(pc: Pc) -> i32 {
         } else if clone.mem[i].command == "jmp" {
             clone.mem[i].command = "nop".to_string();
         }
-        let c2 = clone.clone();
-        if ! panic::catch_unwind(|| run(clone)).is_err() {
-            return run(c2);
-        };
+        if let Ok(acc) = run(clone) {
+            return acc;
+        }
     } 
     unreachable!();
 }
@@ -97,7 +99,7 @@ fn part2(pc: Pc) -> i32 {
 fn main() {
     let pc = Pc{mem: read(), acc: 0, ip: 0};
     println!("===== Part 1 ====");
-    part1(pc.clone());
+    println!("The machine hangs with acc value {}", part1(pc.clone()));
     println!("===== Part 2 ====");
-    println!("---> {}", part2(pc.clone()));
+    println!("The machine should cleanly exit with {}", part2(pc.clone()));
 }
